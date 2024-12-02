@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0  # Deshabilitar clones superficiales para mejor análisis
 
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
@@ -23,22 +23,32 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
-      - name: Setup Flutter
-        run: flutter pub get  # Descarga las dependencias del proyecto
+      # Paso 1: Configurar dependencias
+      - name: Setup Flutter dependencies
+        run: flutter pub get
 
+      # Paso 2: Analizar el código
       - name: Analyze code
-        run: flutter analyze  # Realiza el análisis estático del código
+        run: flutter analyze
 
+      # Paso 3: Ejecutar pruebas (opcional)
       - name: Run tests
-        run: flutter test  # Ejecuta los tests del proyecto
+        run: flutter test
 
+      # Paso 4: Construir para Web (si aplica)
+      - name: Build for web
+        run: flutter build web
+
+      # Paso 5: Descargar y configurar Sonar Scanner
       - name: Download sonar-scanner
         run: |
           curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-6.2.1.4610-linux-x64.zip
           unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
 
+      # Paso 6: Escaneo con SonarCloud
       - name: Build and analyze
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Necesario para PRs
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # Token de SonarCloud configurado en secretos
         run: $HOME/.sonar/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner
+
